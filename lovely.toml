@@ -116,7 +116,7 @@ payload = '''
                     for j = #G.riffraff_area.cards,1, -1 do
                         local card = G.riffraff_area.cards[j]
                         G.riffraff_area:remove_card(card)
-                        card:start_dissolve({G.C.GOLD}, nil, 3)
+                        card:start_dissolve({G.C.GOLD}, nil, 1)
                         Node.stop_hover(card)
                         card = nil
                     end
@@ -158,7 +158,7 @@ pattern = '''    G.discard.T.y = 4.2
 '''
 position = "after"
 payload = '''    
-    G.riffraff_area.T.x =  G.jokers.T.x - G.CARD_W * 2
+    G.riffraff_area.T.x =  G.jokers.T.x - G.CARD_W * 1.75
     G.riffraff_area.T.y = 0
     G.riffraff_area:hard_set_VT()
 '''
