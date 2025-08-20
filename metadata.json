@@ -1,0 +1,11 @@
+{
+	"id": "riffraff",
+	"name": "Riff-Raff",
+	"author": ["edalo"],
+	"description": "Display tooltips for bought jokers and vouchers",
+	"prefix": "rfrf",
+	"main_file": "steamodded.lua",
+	"priority": 0,
+	"version": "0.1",
+	"dependencies": []
+}

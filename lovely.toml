@@ -1,0 +1,165 @@
+[manifest]
+version = "0.1"
+dump_lua = true
+priority = 0
+
+[[patches]]
+[patches.pattern]
+target = "engine/event.lua"
+pattern = '''        achievement = {},
+'''
+position = "after"
+payload = '''        riffraff = {},
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''function Card:add_to_deck(from_debuff)
+'''
+position = "after"
+payload = '''    if not from_debuff and self.ability.set == 'Joker' and G.RIFFRAFF_QUEUE then
+            if G.E_MANAGER.queues['riffraff'] and #G.E_MANAGER.queues['riffraff'] > 0 then
+                for j = 1, #G.E_MANAGER.queues['riffraff'] do
+                    G.E_MANAGER.queues['riffraff'][j].delay = 8
+                end
+            end
+            G.RIFFRAFF_QUEUE:add_card(self)
+    end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''function Card:apply_to_run(center)
+'''
+position = "after"
+payload = '''    if self and self.ability and self.ability.set == 'Voucher' and G.RIFFRAFF_QUEUE then
+            if G.E_MANAGER.queues['riffraff'] and #G.E_MANAGER.queues['riffraff'] > 0 then
+                for j = 1, #G.E_MANAGER.queues['riffraff'] do
+                    G.E_MANAGER.queues['riffraff'][j].delay = 8
+                end
+            end
+            G.RIFFRAFF_QUEUE:add_card(self)
+    end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''function Card:stop_hover()
+'''
+position = "after"
+payload = '''   if self.config.riffraff_display then
+        return
+    end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''    self.play = CardArea(
+        0, 0,
+        CAI.play_W,CAI.play_H, 
+        {card_limit = 5, type = 'play'})
+'''
+position = "after"
+payload = '''    
+    self.riffraff_area = CardArea(
+        0, 0,
+        0.95*G.CARD_W, 
+        0.95*G.CARD_H,
+        {card_limit = 1, type = 'title', highlight_limit = 0, collection = true})
+
+    self.RIFFRAFF_QUEUE = self.RIFFRAFF_QUEUE or {
+    queue = {},
+    active = false,
+    add_card = function(self, card)
+        table.insert(self.queue, card)
+        self:process_queue()
+    end,
+    process_queue = function(self)
+        if self.active or #self.queue == 0 then return end
+        self.active = true
+        local card = table.remove(self.queue, 1)
+        -- Thank you steamodded very cool
+        -- local center = G.P_CENTER_POOLS[card.ability.set][card.ability.order]
+        local center = nil
+        for j = 1, #G.P_CENTER_POOLS[card.ability.set] do
+            if G.P_CENTER_POOLS[card.ability.set][j].name == card.ability.name then
+                center = G.P_CENTER_POOLS[card.ability.set][j]
+                break
+            end
+        end
+        -- Need to panic if center is nil I guess
+        local card_copy = Card(G.riffraff_area.T.x + G.riffraff_area.T.w/2, G.riffraff_area.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, center)
+        G.riffraff_area:emplace(card_copy)
+        card_copy.config.riffraff_display = true
+        card_copy:hover()
+
+        local delay = 20
+        if #self.queue > 0 then
+            delay = 8
+        end
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = delay,
+            blocking = false,
+            blockable = false,
+            func = (function()
+                if G.riffraff_area and G.riffraff_area and #G.riffraff_area.cards > 0 then
+                    for j = #G.riffraff_area.cards,1, -1 do
+                        local card = G.riffraff_area.cards[j]
+                        G.riffraff_area:remove_card(card)
+                        card:start_dissolve({G.C.GOLD}, nil, 3)
+                        Node.stop_hover(card)
+                        card = nil
+                    end
+                end
+                G.RIFFRAFF_QUEUE.active = false
+                G.RIFFRAFF_QUEUE:process_queue()
+                return true
+            end)
+        }), 'riffraff')
+    end
+    }
+    self.RIFFRAFF_QUEUE.active = false
+'''
+match_indent = true
+
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''self.HUD:recalculate()
+'''
+position = "after"
+payload = '''    
+    if G.riffraff_area and G.riffraff_area.cards and #G.riffraff_area.cards > 0 then
+        for j = #G.riffraff_area.cards,1, -1 do
+            local card = G.riffraff_area.cards[j]
+            G.riffraff_area:remove_card(card)
+            card:remove()
+            card = nil
+        end
+    end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = '''    G.discard.T.y = 4.2
+'''
+position = "after"
+payload = '''    
+    G.riffraff_area.T.x =  G.jokers.T.x - G.CARD_W * 2
+    G.riffraff_area.T.y = 0
+    G.riffraff_area:hard_set_VT()
+'''
+match_indent = true
