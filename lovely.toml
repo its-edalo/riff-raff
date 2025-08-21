@@ -97,9 +97,11 @@ payload = '''
         end
         -- Need to panic if center is nil I guess
         local card_copy = Card(G.riffraff_area.T.x + G.riffraff_area.T.w/2, G.riffraff_area.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, center)
-        G.riffraff_area:emplace(card_copy)
         card_copy.config.riffraff_display = true
+        card_copy.config.center.config.riffraff_display = true
+        G.riffraff_area:emplace(card_copy)
         card_copy:hover()
+        card_copy.config.center.config.riffraff_display = nil
 
         local delay = 20
         if #self.queue > 0 then
@@ -161,5 +163,18 @@ payload = '''
     G.riffraff_area.T.x =  G.jokers.T.x - G.CARD_W * 1.75
     G.riffraff_area.T.y = 0
     G.riffraff_area:hard_set_VT()
+'''
+match_indent = true
+
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = '''for _, v in ipairs(info_queue) do
+'''
+position = "before"
+payload = '''if _c.config and _c.config.riffraff_display then
+    return full_UI_table
+end
 '''
 match_indent = true
