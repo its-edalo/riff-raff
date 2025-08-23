@@ -29,7 +29,7 @@ function create_riffraff_queue()
 
         local center = card.config.center
         self.active = true
-        local card_copy = Card(G.riffraff_area.T.x + G.riffraff_area.T.w / 2, G.riffraff_area.T.y,
+        local card_copy = Card(G.riffraff_area.T.x + G.riffraff_area.T.w/2, G.riffraff_area.T.y,
                                G.CARD_W, G.CARD_H, G.P_CARDS.empty, center)
         card_copy.config.riffraff_display = true
 
@@ -37,6 +37,7 @@ function create_riffraff_queue()
             center.config.riffraff_display = true
         end
         G.riffraff_area:emplace(card_copy)
+        card_copy:update(1/60)
         card_copy:hover()
         if center.config then
             center.config.riffraff_display = nil
